@@ -92,7 +92,7 @@ impl LayoutMath for Packed<LrElem> {
         }
 
         // Handle MathFragment::Variant fragments that should be scaled up.
-        for fragment in fragments_inner {
+        for fragment in fragments_inner.iter_mut() {
             if let MathFragment::Variant(ref mut variant) = fragment {
                 if variant.mid_stretched == Some(false) {
                     variant.mid_stretched = Some(true);
@@ -103,16 +103,19 @@ impl LayoutMath for Packed<LrElem> {
 
         // Remove weak SpacingFragment immediately after the opening or immediately
         // before the closing.
-        end_idx += start_idx;
-        let mut index = 0;
-        fragments.retain(|fragment| {
-            index += 1;
-            (index != start_idx + 2 && index + 1 != end_idx)
-                || !matches!(
-                    fragment,
-                    MathFragment::Spacing(SpacingFragment { weak: true, .. })
-                )
-        });
+        if fragments_inner.len() >= 3 {
+            let immediately_after_opening = &fragments_inner[1] as *const _;
+            let immediately_before_closing =
+                &fragments_inner[fragments_inner.len() - 2] as *const _;
+            fragments.retain(|fragment| {
+                let ptr = fragment as *const _;
+                (ptr != immediately_after_opening && ptr != immediately_before_closing)
+                    || !matches!(
+                        fragment,
+                        MathFragment::Spacing(SpacingFragment { weak: true, .. })
+                    )
+            });
+        }
 
         ctx.extend(fragments);
 
