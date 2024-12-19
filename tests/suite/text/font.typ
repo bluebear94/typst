@@ -149,3 +149,9 @@ The number 123.
 // Error: 17-65 coverage regex may only use dot, letters, and character classes
 // Hint: 17-65 the regex is applied to each letter individually
 #set text(font: (name: "Ubuntu", covers: regex("\u{20}-\u{10}")))
+
+--- text-font-ivs-in-last-grapheme ---
+#set page(width: auto)
+#set par(linebreaks: "simple")
+#set text(font: "Noto Serif CJK JP", weight: "bold", size: 24pt)
+近\u{E0101}藤 = #box("近\u{E0101}")藤
