@@ -309,7 +309,9 @@ fn collect_range<'a>(
         } else if split {
             // When the item is split in half, reshape it.
             let reshaped = shaped.reshape(engine, sliced, trim.then_some(breakpoint));
-            items.push(Item::Text(reshaped));
+            if !reshaped.text.is_empty() || !items.is_empty() {
+                items.push(Item::Text(reshaped));
+            }
         } else {
             // When the item is fully contained, just keep it.
             items.push(item);
