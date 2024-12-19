@@ -53,9 +53,10 @@ static CJ_SEGMENTER: LazyLock<LineSegmenter> = LazyLock::new(|| {
 });
 
 /// The Unicode line break properties for each code point.
-static LINEBREAK_DATA: LazyLock<CodePointMapData<LineBreak>> = LazyLock::new(|| {
-    icu_properties::maps::load_line_break(&blob().as_deserializing()).unwrap()
-});
+pub(crate) static LINEBREAK_DATA: LazyLock<CodePointMapData<LineBreak>> =
+    LazyLock::new(|| {
+        icu_properties::maps::load_line_break(&blob().as_deserializing()).unwrap()
+    });
 
 /// A line break opportunity.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -72,9 +73,6 @@ pub enum Breakpoint {
 impl Breakpoint {
     /// Trim a line before this breakpoint.
     pub fn trim(self, line: &str) -> &str {
-        // Trim default ignorables.
-        let line = line.trim_end_matches(is_default_ignorable);
-
         match self {
             // Trim whitespace.
             Self::Normal => line.trim_end_matches(char::is_whitespace),
@@ -96,6 +94,35 @@ impl Breakpoint {
             // Trim nothing further.
             Self::Hyphen(..) => line,
         }
+        // // Trim default ignorables.
+        // let line2 = line.trim_end_matches(is_default_ignorable);
+
+        // let line3 = match self {
+        //     // Trim whitespace.
+        //     Self::Normal => line2.trim_end_matches(char::is_whitespace),
+
+        //     // Trim linebreaks.
+        //     Self::Mandatory => {
+        //         let lb = LINEBREAK_DATA.as_borrowed();
+        //         line2.trim_end_matches(|c| {
+        //             matches!(
+        //                 lb.get(c),
+        //                 LineBreak::MandatoryBreak
+        //                     | LineBreak::CarriageReturn
+        //                     | LineBreak::LineFeed
+        //                     | LineBreak::NextLine
+        //             )
+        //         })
+        //     }
+
+        //     // Trim nothing further.
+        //     Self::Hyphen(..) => line2,
+        // };
+        // if line3.len() == line2.len() {
+        //     line
+        // } else {
+        //     line3
+        // }
     }
 
     /// Whether this is a hyphen breakpoint.

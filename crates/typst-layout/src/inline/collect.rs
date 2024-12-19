@@ -40,7 +40,7 @@ pub enum Item<'a> {
     Fractional(Fr, Option<(&'a Packed<BoxElem>, Locator<'a>, StyleChain<'a>)>),
     /// Layouted inline-level content.
     Frame(Frame),
-    /// A tag.
+    /// A tag marking the start or end of a locatable element.
     Tag(&'a Tag),
     /// An item that is invisible and needs to be skipped, e.g. a Unicode
     /// isolate.

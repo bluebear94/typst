@@ -149,10 +149,10 @@ pub fn line<'a>(
     };
 
     // Trim the line at the end, if necessary for this breakpoint.
-    let trim = range.start + breakpoint.trim(full).len();
+    // let trim = range.start + breakpoint.trim(full).len();
 
     // Collect the items for the line.
-    let mut items = collect_items(engine, p, range, trim);
+    let mut items = collect_items(engine, p, range, breakpoint);
 
     // Add a hyphen at the line start, if a previous dash should be repeated.
     if pred.map_or(false, |pred| should_repeat_hyphen(pred, full)) {
@@ -189,7 +189,7 @@ fn collect_items<'a>(
     engine: &Engine,
     p: &'a Preparation,
     range: Range,
-    trim: usize,
+    breakpoint: Breakpoint,
 ) -> Items<'a> {
     let mut items = Items::new();
     let mut fallback = None;
@@ -197,7 +197,7 @@ fn collect_items<'a>(
     // Collect the items for each consecutively ordered run.
     reorder(p, range.clone(), |subrange, rtl| {
         let from = items.len();
-        collect_range(engine, p, subrange, trim, &mut items, &mut fallback);
+        collect_range(engine, p, subrange, &mut items, &mut fallback, breakpoint);
         if rtl {
             items.reorder(from);
         }
@@ -267,10 +267,25 @@ fn collect_range<'a>(
     engine: &Engine,
     p: &'a Preparation,
     range: Range,
-    trim: usize,
     items: &mut Items<'a>,
     fallback: &mut Option<ItemEntry<'a>>,
+    breakpoint: Breakpoint,
 ) {
+    let mut trim_target = None;
+    let mut trim_interrupted = false;
+    for (_, item) in p.slice(range.clone()) {
+        match item {
+            Item::Text(shaped) => {
+                trim_target = Some(&raw const *shaped);
+                trim_interrupted = false;
+            }
+            Item::Tag(_) | Item::Skip(_) => (),
+            _ => trim_interrupted = true,
+        }
+    }
+    if trim_interrupted {
+        trim_target = None;
+    }
     for (subrange, item) in p.slice(range.clone()) {
         // All non-text items are just kept, they can't be split.
         let Item::Text(shaped) = item else {
@@ -280,11 +295,11 @@ fn collect_range<'a>(
 
         // The intersection range of the item, the subrange, and the line's
         // trimming.
-        let sliced =
-            range.start.max(subrange.start)..range.end.min(subrange.end).min(trim);
+        let sliced = range.start.max(subrange.start)..range.end.min(subrange.end);
+        let trim = Some(&raw const *shaped) == trim_target;
 
         // Whether the item is split by the line.
-        let split = subrange.start < sliced.start || sliced.end < subrange.end;
+        let split = trim || subrange.start < sliced.start || sliced.end < subrange.end;
 
         if sliced.is_empty() {
             // When there is no text, still keep this as a fallback item, which
@@ -293,7 +308,7 @@ fn collect_range<'a>(
             *fallback = Some(ItemEntry::from(Item::Text(shaped.empty())));
         } else if split {
             // When the item is split in half, reshape it.
-            let reshaped = shaped.reshape(engine, sliced);
+            let reshaped = shaped.reshape(engine, sliced, trim.then_some(breakpoint));
             items.push(Item::Text(reshaped));
         } else {
             // When the item is fully contained, just keep it.
@@ -703,6 +718,9 @@ impl Debug for Items<'_> {
 }
 
 /// A reference to or a boxed item.
+///
+/// This is semantically equivalent to `Cow<'a, Item<'a>>`, but we
+/// don't use `Cow` because we want to box owned items.
 pub enum ItemEntry<'a> {
     Ref(&'a Item<'a>),
     Box(Box<Item<'a>>),

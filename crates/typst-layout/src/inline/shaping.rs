@@ -19,6 +19,7 @@ use typst_utils::SliceExt;
 use unicode_bidi::{BidiInfo, Level as BidiLevel};
 use unicode_script::{Script, UnicodeScript};
 
+use super::linebreak::Breakpoint;
 use super::{decorate, Item, Range, SpanMapper};
 use crate::modifiers::{FrameModifiers, FrameModify};
 
@@ -406,8 +407,18 @@ impl<'a> ShapedText<'a> {
     /// shaping process if possible.
     ///
     /// The text `range` is relative to the whole inline layout.
-    pub fn reshape(&'a self, engine: &Engine, text_range: Range) -> ShapedText<'a> {
-        let text = &self.text[text_range.start - self.base..text_range.end - self.base];
+    pub fn reshape(
+        &'a self,
+        engine: &Engine,
+        mut text_range: Range,
+        trim: Option<Breakpoint>,
+    ) -> ShapedText<'a> {
+        let mut text =
+            &self.text[text_range.start - self.base..text_range.end - self.base];
+        if let Some(breakpoint) = trim {
+            text = breakpoint.trim(text);
+            text_range.end = text_range.start + text.len();
+        }
         if let Some(glyphs) = self.slice_safe_to_break(text_range.clone()) {
             #[cfg(debug_assertions)]
             assert_all_glyphs_in_range(glyphs, text, text_range.clone());
