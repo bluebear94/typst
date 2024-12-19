@@ -154,3 +154,9 @@ The number 123.
 #set text(-1pt)
 
 a
+
+--- text-font-ivs-in-last-grapheme ---
+#set page(width: auto)
+#set par(linebreaks: "simple")
+#set text(font: "Noto Serif CJK JP", weight: "bold", size: 24pt)
+近\u{E0101}藤 = #box("近\u{E0101}")藤
