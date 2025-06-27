@@ -3,8 +3,11 @@ use unicode_bidi::{BidiInfo, Level as BidiLevel};
 
 use super::*;
 
+/// A [prepared item][Item] associated with a range of text.
 pub struct Run<'a> {
+    /// The item associated with the range.
     pub item: Item<'a>,
+    /// The range of byte offsets into [`Preparation::text`].
     pub range: Range,
 }
 
