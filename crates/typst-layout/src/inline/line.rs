@@ -270,12 +270,13 @@ fn collect_range<'a>(
     items: &mut Items<'a>,
     fallback: &mut Option<ItemEntry<'a>>,
 ) {
-    for (idx, (subrange, item)) in p.slice(range.clone()).enumerate() {
+    for (idx, run) in p.slice(range.clone()).enumerate() {
         // All non-text items are just kept, they can't be split.
-        let Item::Text(shaped) = item else {
-            items.push(item, idx);
+        let Item::Text(shaped) = &run.item else {
+            items.push(&run.item, idx);
             continue;
         };
+        let subrange = &run.range;
 
         // The intersection range of the item, the subrange, and the line's
         // trimming.
@@ -296,7 +297,7 @@ fn collect_range<'a>(
             items.push(Item::Text(reshaped), idx);
         } else {
             // When the item is fully contained, just keep it.
-            items.push(item, idx);
+            items.push(&run.item, idx);
         }
     }
 }
