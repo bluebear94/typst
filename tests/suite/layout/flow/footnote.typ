@@ -419,3 +419,11 @@ C
 #document("standalone/c.html")[#footnote[C1], #footnote[C2]]
 #document("standalone/d.html")[#footnote[D1], #footnote[D2]]
 #document("standalone/e.pdf" )[#footnote[E1], #footnote[E2]]
+
+--- footnote-entry-run-in ---
+#set footnote.entry(layout: "run-in")
+
+#lorem(5) #footnote[First]
+#lorem(11) #footnote[Second]
+#lorem(13) #footnote[Third]
+#lorem(8) #footnote[Fourth]

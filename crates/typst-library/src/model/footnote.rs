@@ -290,6 +290,9 @@ pub struct FootnoteEntry {
     /// ```
     #[default(Em::new(1.0).into())]
     pub indent: Length,
+
+    #[default(FootnoteEntryLayout::Block)]
+    pub layout: FootnoteEntryLayout,
 }
 
 impl Packed<FootnoteEntry> {
@@ -354,3 +357,22 @@ impl FootnoteContainer {
 /// that's not needed anymore.
 #[elem(Locatable)]
 pub struct FootnoteMarker {}
+
+/// How footnote entries are laid out against each other.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum FootnoteEntryLayout {
+    /// Each footnote gets its own paragraph.
+    Block,
+    /// All footnotes are collected into a single paragraph.
+    RunIn,
+}
+
+cast! {
+    FootnoteEntryLayout,
+    self => match self {
+        Self::Block => "block".into_value(),
+        Self::RunIn => "run-in".into_value(),
+    },
+    "block" => Self::Block,
+    "run-in" => Self::RunIn,
+}
